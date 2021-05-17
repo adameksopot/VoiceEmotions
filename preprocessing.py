@@ -5,6 +5,7 @@ import sys
 import glob
 import soundfile
 import random
+import simpleaudio as sa
 # Emotion (01 = neutral, 02 = calm, 03 = happy, 04 = sad, 05 = angry, 06 = fearful, 07 = disgust, 08 = surprised)
 # The letters 'a', 'd', 'f', 'h', 'n', 'sa' and 'su' represent 'anger', 'disgust', 'fear', 'happiness', 'neutral', 'sad' and 'surprise' 
 # (anger, disgust, fear, happiness, pleasant surprise, sadness, and neutral)
@@ -43,17 +44,18 @@ def readSignal(paths, targets1, targets2):
     
     return signals
 
-def plotExample(signal):
+def plotExample(signal, x):
     plt.figure(1)
-    plt.title("Signal Wave "+str(signal[1]))
+    plt.title("Signal Wave "+str(signal[1])+'record: '+str(x))
     plt.plot(signal[0])
     plt.show()
 
 def removeSilence(signal):
+    
     return signal
 
-
-targets2 = {2:'neutral', 2:'calm', 3:'happy', 4:'sad', 5:'angry', 6:'fear', 7:'disgust', 8: 'ps'}
+def play(signal, sample_rate, num_channels = 1, bytes_per_sample = 2):
+    play_obj = sa.play_buffer(signal, num_channels, bytes_per_sample, sample_rate)
 
 targets1 = {1: 'neutral', 2: 'calm', 3: 'happy', 4: 'sad', 5: 'angry', 6: 'fearful', 7: 'disgust', 8: 'surprised'}
 targets2 = {'n':1, 'h':3, 'sa':4, 'a':5, 'f':6, 'd':7, 'su': 8}
@@ -65,8 +67,15 @@ paths.append(glob.glob('data2/*/*.wav'))
 paths.append(glob.glob('data3/*.wav'))
 
 data = readSignal(paths, targets2, targets3)
-plotExample(data[0])
 
 for i in range(0, 10):
     x = random.randint(0, len(data))
-    plotExample(data[x])
+    plotExample(data[x], x)
+
+#play example file
+sample_rate1 = 48000    #dataset 1 - records from 0 to  1439
+sample_rate2 = 44100    #dataset 2 - records from 1440 to 1919  
+sample_rate3 = 24414    #dataset 3 - records from 1920 to  4719
+
+play(data[496][0], sample_rate1)
+
