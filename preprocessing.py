@@ -64,19 +64,26 @@ def remove_noise():
 def play(path):
     ipd.Audio(path)
 
-def MFCC(y, sr):
-    return librosa.feature.mfcc(y=y, sr=sr)
-
 def zero_crossing_rate(y):
-    return librosa.feature.zero_crossing_rate(y)
+    #działa
+    return sum(librosa.zero_crossings(y))
+
+def spectral_centroids(y, sr):
+    #w sumie to nie wiem co z tym XD
+    return librosa.feature.spectral_centroid(y, sr=sr)[0]
+
+def spectral_roll_off(y, sr):
+    #z tym też nie wiem co xd
+    S, phase = librosa.magphase(librosa.stft(y))
+    return(librosa.feature.spectral_rolloff(S=S, sr=sr))
+
+def MFCC(y, sr):
+    #to to wgl jest dziwne
+    return librosa.feature.mfcc(y=y, sr=sr)
 
 def energy():
     # to do 
     return 
-
-def spectral_roll_off(y, sr):
-    S, phase = librosa.magphase(librosa.stft(y))
-    return(librosa.feature.spectral_rolloff(S=S, sr=sr))
 
 def spectral_flux(y, sr):
     onset_env = librosa.onset.onset_strength(y=y, sr=sr)
@@ -115,8 +122,9 @@ dataset = 0
 file = 0
 play(paths[dataset][file])
 
-mfcc = []
 zero_crossing = []
+spectral_centr = []
+mfcc = []
 ener = []
 spec_roll_off = []
 spec_flux = []
@@ -126,9 +134,14 @@ pit = []
 for i in data:
     mfcc.append(MFCC(i[0], i[2]))
     zero_crossing.append(zero_crossing_rate(i[0]))
-    ener.append()
+    spectral_centr.append(spectral_centroids(i[0], i[2]))
+    #ener.append()
     spec_roll_off.append(spectral_roll_off(i[0], i[2]))
     spec_flux.append(spectral_flux(i[0], i[2]))
-    spec_entropy.append()
+    #spec_entropy.append()
     chroma.append(chroma_features(i[0], i[2]))
     pit.append(pitch(i[0], i[2]))
+    
+    
+    
+
