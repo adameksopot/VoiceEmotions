@@ -78,8 +78,17 @@ def spectral_roll_off(y, sr):
     return(librosa.feature.spectral_rolloff(S=S, sr=sr))
 
 def MFCC(y, sr):
-    #to to wgl jest dziwne
-    return librosa.feature.mfcc(y=y, sr=sr)
+    mfcc = librosa.feature.mfcc(y=y, n_mfcc=13, sr=sr) #n_mfcc 13 or 22 it will depend on kind of emotion
+    #first derivative
+    delta1 = librosa.feature.delta(mfcc)
+    #second derivative
+    delta2 = librosa.feature.delta(mfcc, order = 2)
+    mfcc_features = np.concatenate((mfcc, delta1, delta2))
+    print(mfcc_features.shape)
+    #calculating mean and variance 
+    mfcc_mean = mfcc.mean(axis=1) #we can add it to features, we will see
+    mfcc_variance = mfcc.var(axis=1) #we can add it to features, we will see
+    return mfcc #or mfcc_features
 
 def energy():
     # to do 
