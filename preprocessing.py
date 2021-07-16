@@ -9,7 +9,7 @@ import simpleaudio as sa
 import librosa
 import IPython.display as ipd
 import librosa.display
-
+import pandas as pd
 def get_key(my_dict, val):
     """
     get dictionary key from value
@@ -77,9 +77,18 @@ def spectral_roll_off(y, sr):
     S, phase = librosa.magphase(librosa.stft(y))
     return(librosa.feature.spectral_rolloff(S=S, sr=sr))
 
-def MFCC(y, sr):
-    #to to wgl jest dziwne
-    return librosa.feature.mfcc(y=y, sr=sr)
+def MFCC(y, sr, n_mfcc=13):
+    mfcc = np.mean(librosa.feature.mfcc(y=y, n_mfcc=n_mfcc, sr=sr), axis=1) #n_mfcc 13 or 22 it will depend on kind of emotion
+    #first derivative
+    # delta1 = librosa.feature.delta(mfcc)
+    # #second derivative
+    # delta2 = librosa.feature.delta(mfcc, order = 2)
+    # mfcc_features = np.concatenate((mfcc, delta1, delta2))
+    # print(mfcc_features.shape)
+    # #calculating mean and variance 
+    # mfcc_mean = mfcc.mean(axis=1) #we can add it to features, we will see
+    # mfcc_variance = mfcc.var(axis=1) #we can add it to features, we will see
+    return mfcc #or mfcc_features
 
 def energy():
     # to do 
@@ -122,26 +131,26 @@ dataset = 0
 file = 0
 play(paths[dataset][file])
 
-zero_crossing = []
-spectral_centr = []
-mfcc = []
-ener = []
-spec_roll_off = []
-spec_flux = []
-spec_entropy = []
-chroma = []
-pit = []
+mfcc13 = []
 for i in data:
-    mfcc.append(MFCC(i[0], i[2]))
-    zero_crossing.append(zero_crossing_rate(i[0]))
-    spectral_centr.append(spectral_centroids(i[0], i[2]))
-    #ener.append()
-    spec_roll_off.append(spectral_roll_off(i[0], i[2]))
-    spec_flux.append(spectral_flux(i[0], i[2]))
-    #spec_entropy.append()
-    chroma.append(chroma_features(i[0], i[2]))
-    pit.append(pitch(i[0], i[2]))
-    
+    mfcc13.append(MFCC(i[0], i[2], 13))
+
+mfcc22 = []
+for i in data:
+    mfcc22.append(MFCC(i[0], i[2], 22))
+
+y=[]
+for i in data:
+   y.append(i[1]) 
+   
+mfcc13_df = pd.DataFrame(np.c_[np.array(mfcc13), np.array(y)])
+mfcc13_df.to_csv('mfcc13_df.csv', index=False)  
+mfcc22_df = pd.DataFrame(np.c_[np.array(mfcc22), np.array(y)])
+mfcc22_df.to_csv('mfcc22_df.csv', index=False)
+
+
+# signal, sample_rate = librosa.load('data1/Actor_01/03-01-01-01-01-01-01.wav')
+# mfcc = np.mean(librosa.feature.mfcc(y=signal, n_mfcc=13, sr=sample_rate), axis=1)
     
     
 
