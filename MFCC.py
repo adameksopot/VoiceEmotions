@@ -36,7 +36,7 @@ def read_signal(paths, targets1, targets2):
     signals = []
     for i in paths[0]:
         signal, sample_rate = librosa.load(i)
-        signals.append([signal, i[21], sample_rate])                                 #21th char refers to class (emotion)
+        signals.append([signal, i[22], sample_rate])                                 #21th char refers to class (emotion)
 
     
     for i in paths[1]:
@@ -57,25 +57,6 @@ def plot_example(signal, x, sr):
     librosa.display.waveplot(signal, sr=sr)
     plt.show()
 
-def remove_noise():    
-    # to do
-    return 1
-
-def play(path):
-    ipd.Audio(path)
-
-def zero_crossing_rate(y):
-    #działa
-    return sum(librosa.zero_crossings(y))
-
-def spectral_centroids(y, sr):
-    #w sumie to nie wiem co z tym XD
-    return librosa.feature.spectral_centroid(y, sr=sr)[0]
-
-def spectral_roll_off(y, sr):
-    #z tym też nie wiem co xd
-    S, phase = librosa.magphase(librosa.stft(y))
-    return(librosa.feature.spectral_rolloff(S=S, sr=sr))
 
 def MFCC(y, sr, n_mfcc=13):
     mfcc = np.mean(librosa.feature.mfcc(y=y, n_mfcc=n_mfcc, sr=sr), axis=1) #n_mfcc 13 or 22 it will depend on kind of emotion
@@ -89,25 +70,6 @@ def MFCC(y, sr, n_mfcc=13):
     # mfcc_mean = mfcc.mean(axis=1) #we can add it to features, we will see
     # mfcc_variance = mfcc.var(axis=1) #we can add it to features, we will see
     return mfcc #or mfcc_features
-
-def energy():
-    # to do 
-    return 
-
-def spectral_flux(y, sr):
-    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-    return onset_env
-
-def spectral_entropy():
-    #to do
-    return
-
-def chroma_features(y, sr):
-    return librosa.feature.chroma_stft(y=y, sr=sr)
-
-def pitch(y, sr):
-    pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
-    return pitches
     
 targets1 = {1: 'neutral', 2: 'calm', 3: 'happy', 4: 'sad', 5: 'angry',
             6: 'fearful', 7: 'disgust', 8: 'surprised'}
@@ -126,10 +88,6 @@ for i in range(0, 10):
     x = random.randint(0, len(data))
     plot_example(data[x][0], data[x][1], data[x][2])
 
-#play example file
-dataset = 0
-file = 0
-play(paths[dataset][file])
 
 mfcc13 = []
 for i in data:
