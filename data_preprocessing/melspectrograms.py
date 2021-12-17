@@ -46,10 +46,8 @@ def read_signal(paths, targets1, targets2):
     return signals
 
 
-def MFCC(y, sr, n_mfcc=13):
-    mfcc = librosa.feature.mfcc(y=y, n_mfcc=n_mfcc, sr=sr)
-    return mfcc  # or mfcc_features
-
+def melspectrogram(y, sr):
+    return librosa.feature.melspectrogram(y=y, sr=sr)
 
 targets1 = {1: 'neutral', 2: 'calm', 3: 'happy', 4: 'sad', 5: 'angry',
             6: 'fearful', 7: 'disgust', 8: 'surprised'}
@@ -61,25 +59,23 @@ paths = [glob.glob('data1/*/*.wav'), glob.glob('data2/*/*.wav'), glob.glob('data
 
 data = read_signal(paths, targets2, targets3)
 
-mfcc = []
-n_mfcc = 32
+melspectrograms = []
 for i in data:
-    mfcc.append(MFCC(i[0], i[2], n_mfcc))
+    melspectrograms.append(melspectrogram(i[0], i[2]))
 
 y = []
 for i in data:
     y.append(int(i[1]) - 1)
 
 minimum = 200
-for i in mfcc:
+for i in melspectrograms:
     if i.shape[1] < minimum:
         minimum = i.shape[1]
 
-for i in range(len(mfcc)):
-    mfcc[i] = mfcc[i][:, :minimum]
-    mfcc[i] = np.expand_dims(mfcc[i], axis=2)
+for i in range(len(melspectrograms)):
+    melspectrograms[i] = melspectrograms[i][:, :minimum]
+    melspectrograms[i] = np.expand_dims(melspectrograms[i], axis=2)
 
 # saving mfcc
-saved = np.save('models/test.npy', mfcc)
-saved = np.save('models/target.npy', y)
+saved = np.save('models/spectrograms.npy', melspectrograms)
 
