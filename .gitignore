@@ -1,4 +1,7 @@
 /data1
 /data2
 /data3
+/.idea
+*.env
+/build
 

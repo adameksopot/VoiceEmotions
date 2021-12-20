@@ -4,3 +4,5 @@ scikit-learn==1.0.1
 SoundFile==0.10.3.post1
 librosa==0.8.1
 matplotlib==3.5.0
+tensorflow~=2.7.0
+keras~=2.7.0
