@@ -19,6 +19,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier 
 from sklearn.metrics import accuracy_score 
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn.model_selection import GridSearchCV
@@ -27,11 +30,11 @@ from sklearn.decomposition import PCA
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 
-data = pd.read_csv('mfcc22_df.csv', index_col=False) #if needed change to mfcc22_df.csv
+data = pd.read_csv('mfcc22_df.csv', index_col=False) 
 labels = data.iloc[:,[-1]]
 labels = labels -1
 
-data = data.drop(labels.columns,axis = 1) # dropping labels column
+data = data.drop(labels.columns,axis = 1)
 data.describe()
 
 data = data.to_numpy()
@@ -39,7 +42,6 @@ labels = labels.to_numpy()
 (unique, counts) = np.unique(labels, return_counts=True)
 print(unique, counts) 
 
-#remove class 2
 indexes = np.where(labels == 1)
 data = np.delete(data, indexes, 0)
 labels = np.delete(labels, indexes, 0)
@@ -48,26 +50,11 @@ labels = np.where(labels<1, labels, labels-1)
 (unique, counts) = np.unique(labels, return_counts=True)
 print(unique, counts)
 
-"""##Outliers
-
-"""
-
-# Q1 = data.quantile(0.25)
-# Q3 = data.quantile(0.75)
-# IQR = Q3 - Q1
-# print(IQR)
-# print(data.any() < (Q1 - 1.5*IQR)) and (data.any() > (Q3 + 1.5*IQR))
-#from scipy import stats
-#data=data[(np.abs(stats.zscore(data)) < 3).all(axis=1)]
-
 """##Standarization"""
 
 data +=848.919070 #adding abs min value to whole data just to elimiate negative values
-
 min_max_scaler = preprocessing.MinMaxScaler()
 data = min_max_scaler.fit_transform(data)
-
-data
 
 """##Splitting data
 
@@ -87,7 +74,7 @@ print("Number of features:", X_train.shape[1])
 
 """##Undersampling data or Oversampling - to choose"""
 
-#rus = RandomUnderSampler(random_state=0)
+# rus = RandomUnderSampler(random_state=0)
 # rus = RandomOverSampler(random_state=0)
 # X_resampled, y_resampled = rus.fit_resample(X_train, y_train)
 # X_valid_res, y_valid_res = rus.fit_resample(X_valid, y_valid)
@@ -106,16 +93,6 @@ plt.ylabel('Wariancja')
 plt.xlabel('Główne składowe')
 plt.show()
 
-#PCA worsen the accuracy, uncomment to use it
-
-# pca1 = PCA(n_components=15) 
-# X_resampled = pca1.fit_transform(X_resampled)
-# print(X_resampled.shape)
-
-# pca1 = PCA(n_components=15) 
-# X_test = pca1.fit_transform(X_test)
-# print(X_test.shape)
-
 """#KERAS
 
 """
@@ -125,15 +102,12 @@ num_classes = 7
 keras_model = tf.keras.Sequential([
                                    
     tf.keras.Input(shape=(22,)),
-    #tf.keras.layers.Dense(300, activation='relu'),
     tf.keras.layers.Dense(128, activation='relu'), 
     tf.keras.layers.Dense(128, activation='relu'), 
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(64, activation='relu'), 
     tf.keras.layers.Dense(64, activation='relu'), 
-    #tf.keras.layers.Dense(50, activation='relu'),
-    tf.keras.layers.Dense(num_classes, activation='softmax'),
-    #tf.keras.layers.Dense(10)       
+    tf.keras.layers.Dense(num_classes, activation='softmax'),    
   ])
 
 keras_model.compile(
@@ -172,11 +146,6 @@ plt.legend(['train', 'validation'])
 
 test_results = keras_model.evaluate(X_test, y_test, verbose=1)
 print(f'Test results - Loss: {test_results[0]} - Accuracy: {test_results[1]}%')
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import f1_score
 
 predict_x=keras_model.predict(X_test) 
 classes_x=np.argmax(predict_x,axis=1)
