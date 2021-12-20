@@ -29,6 +29,7 @@ from imblearn.over_sampling import RandomOverSampler
 
 data = pd.read_csv('mfcc22_df.csv', index_col=False) #if needed change to mfcc22_df.csv
 labels = data.iloc[:,[-1]]
+labels = labels -1
 
 data = data.drop(labels.columns,axis = 1) # dropping labels column
 data.describe()
@@ -39,10 +40,10 @@ labels = labels.to_numpy()
 print(unique, counts) 
 
 #remove class 2
-indexes = np.where(labels == 2)
+indexes = np.where(labels == 1)
 data = np.delete(data, indexes, 0)
 labels = np.delete(labels, indexes, 0)
-labels = np.where(labels<2, labels, labels-1)
+labels = np.where(labels<1, labels, labels-1)
 
 (unique, counts) = np.unique(labels, return_counts=True)
 print(unique, counts)
@@ -119,7 +120,7 @@ plt.show()
 
 """
 
-num_classes = 8
+num_classes = 7
 
 keras_model = tf.keras.Sequential([
                                    
