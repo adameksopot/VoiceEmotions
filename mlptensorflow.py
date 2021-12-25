@@ -60,9 +60,9 @@ data = min_max_scaler.fit_transform(data)
 
 """
 
-X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.3, random_state=42)
 
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42) 
+X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=0.5, random_state=42) 
 
 print("Number of training samples:", X_train.shape[0])
 
@@ -117,7 +117,7 @@ keras_model.compile(
 )
 keras_model.summary()
 
-batch_size = 254
+batch_size = 256
 epochs = 120
 learning_rate = 'adaptive'
 
