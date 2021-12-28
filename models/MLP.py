@@ -1,141 +1,133 @@
 import pandas as pd
 import numpy as np
+import tensorflow as tf
+import os
+import pickle
+import seaborn as sn
+import keras
+from keras import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
-import os
-import pickle
 from sklearn.decomposition import PCA
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 
-data = pd.read_csv('../mfcc13_df.csv', index_col=False)  # if needed change to mfcc22_df.csv
+data = pd.read_csv('../mfcc22_df.csv', index_col=False)
 labels = data.iloc[:, [-1]]
+labels = labels - 1
 
-data = data.drop(labels.columns, axis=1)  # dropping labels column
+data = data.drop(labels.columns, axis=1)
 data.describe()
 
-# Check if data is balanced
-print(labels.value_counts())
+data = data.to_numpy()
+labels = labels.to_numpy()
+(unique, counts) = np.unique(labels, return_counts=True)
+print(unique, counts)
 
-print(data.isnull().sum())
-print(data)
+indexes = np.where(labels == 1)
+data = np.delete(data, indexes, 0)
+labels = np.delete(labels, indexes, 0)
+labels = np.where(labels < 1, labels, labels - 1)
 
-print(data.isna().sum())
-print(data.loc[0][:])
+(unique, counts) = np.unique(labels, return_counts=True)
+print(unique, counts)
 
-# Outliers
-Q1 = data.quantile(0.25)
-Q3 = data.quantile(0.75)
-IQR = Q3 - Q1
-print(IQR)
-print(data.any() < (Q1 - 1.5 * IQR)) and (data.any() > (Q3 + 1.5 * IQR))
+"""##Standarization"""
 
-# from scipy import stats
-# data=data[(np.abs(stats.zscore(data)) < 3).all(axis=1)]
-
-for column in data:
-    plt.figure()
-    data.boxplot([column])
-
-# Standardization
 data += 848.919070  # adding abs min value to whole data just to elimiate negative values
-x = data.values
 min_max_scaler = preprocessing.MinMaxScaler()
-x_scaled = min_max_scaler.fit_transform(x)
-data = pd.DataFrame(x_scaled)
-data
+data = min_max_scaler.fit_transform(data)
 
-# Splitting data
-X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.3, random_state=50)
+"""##Splitting data
+
+"""
+
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.3, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=0.5, random_state=42)
 
 print("Number of training samples:", X_train.shape[0])
 print("Number of testing samples:", X_test.shape[0])
+print("Number of val samples:", X_val.shape[0])
 print("Number of features:", X_train.shape[1])
 
-# Undersampling data or Oversampling - to choose
+"""#KERAS
 
-rus = RandomUnderSampler(random_state=0)
-# rus = RandomOverSampler(random_state=0)
-X_resampled, y_resampled = rus.fit_resample(X_train, y_train)
-X_resampled.shape, y_resampled.shape
+"""
 
-y_resampled.value_counts()
+num_classes = 7
 
-# PCA
-pca = PCA()
-X_train_new = pca.fit_transform(X_resampled)
+keras_model = tf.keras.Sequential([
 
-explained_variance = pca.explained_variance_ratio_
+    tf.keras.Input(shape=(22,)),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(num_classes, activation='softmax'),
+])
 
-plt.figure(figsize=(6, 4))
-plt.bar(np.arange(0, len(explained_variance)), explained_variance, alpha=0.5, align='center')
-plt.ylabel('Wariancja')
-plt.xlabel('Główne składowe')
-plt.show()
+keras_model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+keras_model.summary()
 
-# PCA worsen the accuracy, uncomment to use it
+batch_size = 256
+epochs = 120
+learning_rate = 'adaptive'
 
-# pca1 = PCA(n_components=10) 
-# X_resampled = pca1.fit_transform(X_resampled)
-# print(X_resampled.shape)
+history = keras_model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val))
 
-# pca1 = PCA(n_components=10) 
-# X_test = pca1.fit_transform(X_test)
-# print(X_test.shape)
+plt.figure(figsize=(16, 8))
 
-# Grid Search - finding best combination of hyperparameters
-# Uncoment to use grid search to find best hyperparameters - already found ->model_params
-# model = MLPClassifier()
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'validation'])
 
-# parameter_space = {
-#     'hidden_layer_sizes': [(200,),(300,)],
-#     'activation': ['tanh', 'relu'],
-#     'solver': ['sgd', 'adam'],
-#     'alpha': [0.01, 0.1],
-#     'learning_rate': ['constant','adaptive'],
-#     'max_iter': [200, 500],
-#     'batch_size': [100, 254]
+loss = history.history['loss']
+val_loss = history.history['val_loss']
 
-# }
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Training and validation loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'validation'])
 
-# clf = GridSearchCV(model, parameter_space, n_jobs=-1, cv=5)
-# clf.fit(X_train, y_train)
+test_results = keras_model.evaluate(X_test, y_test, verbose=1)
+print(f'Test results - Loss: {test_results[0]} - Accuracy: {test_results[1]}%')
 
-# print('Best parameters found:\n', clf.best_params_)
+predict_x = keras_model.predict(X_test)
+classes_x = np.argmax(predict_x, axis=1)
 
-# means = clf.cv_results_['mean_test_score']
-# stds = clf.cv_results_['std_test_score']
-# for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-#     print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+matrix = confusion_matrix(y_test, classes_x)
 
-model_params = {
-    'activation': 'relu',
-    'alpha': 0.01,
-    'batch_size': 254,
-    'hidden_layer_sizes': (300,),
-    'learning_rate': 'adaptive',
-    'max_iter': 200,
-    'solver': 'adam'
-}
+x_axis_labels = ['neutral', 'happy', 'sad', 'angry', 'fearful', 'disgust', 'surprised']
 
-model = MLPClassifier(**model_params)
-model.fit(X_resampled, y_resampled)
+plt.subplots(figsize=(10, 10))
+sn.heatmap(matrix, annot=True, annot_kws={"size": 10}, fmt='.1f', xticklabels=x_axis_labels, yticklabels=x_axis_labels)
 
-y_true, y_pred = y_test, model.predict(X_test)
-accuracy = accuracy_score(y_true, y_pred)
+print(classification_report(y_test, classes_x, target_names=x_axis_labels))
 
-print("Accuracy: {:.2f}%".format(accuracy * 100))
+"""## Saving model"""
 
-print(model.n_layers_)
-print(model.n_iter_)
-print(model.loss_)
+if not os.path.isdir("result"):
+    os.mkdir("result")
 
-print('Results on the test set:')
-print(classification_report(y_true, y_pred))
-confusion_matrix(y_true, y_pred)
+pickle.dump(keras_model, open("result/TensorflowMlpClassifier.model", "wb"))
